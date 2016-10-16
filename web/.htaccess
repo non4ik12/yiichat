@@ -1,0 +1,93 @@
+AddDefaultCharset UTF-8
+
+php_value post_max_size 20M
+php_value upload_max_filesize 20M
+
+DirectoryIndex index.php
+Require all granted
+
+Order deny,allow
+deny from all
+# Список IP через пробел, с которых доступ разрешен
+Allow from 127.0.0.1 78.30.206.78 46.101.97.232 82.193.101.132 91.105.239.133 78.173.100.54 88.244.203.63 46.211.66.244
+#Allow from 46.101.97.232 176.36.95.48 82.193.101.132 178.158.100.45 37.44.98.43 #88.85.72.203 178.158.118.115
+# Сервер # Я # Артем
+
+### Сжать ответ сервера для перечисленных MIME типов
+<ifModule mod_deflate.c>
+  <IfModule mod_filter.c>
+      AddOutputFilterByType DEFLATE text/plain text/html
+      AddOutputFilterByType DEFLATE text/css
+      AddOutputFilterByType DEFLATE text/javascript application/javascript application/x-javascript
+      AddOutputFilterByType DEFLATE text/xml application/xml application/xhtml+xml application/rss+xml
+      AddOutputFilterByType DEFLATE application/json
+      AddOutputFilterByType DEFLATE application/vnd.ms-fontobject application/x-font-ttf font/opentype image/svg+xml image/x-icon
+  </ifModule>
+</ifModule>
+
+
+### Способ #1
+### Подсказать браузеру схему кеширования через заголовки в ответе сервера
+<ifModule mod_headers.c>
+    # 43200 - день, 604800 - неделя, 2592000 - месяц
+    <FilesMatch "\.(html|js|css)$">
+	Header set Cache-Control "max-age=604800"
+        #Header unset Last-Modified
+    </FilesMatch>
+    <Files *.txt>
+	Header add Cache-Control "max-age=43200"
+    </Files>
+    <FilesMatch "\.(flv|swf|ico|gif|jpg|jpeg|png|svg)$">
+	Header set Cache-Control "max-age=604800"
+    </FilesMatch>
+    <FilesMatch "\.(pl|php|cgi|spl|scgi|fcgi)$">
+	# отключить кэширование
+	Header unset Cache-Control
+    </FilesMatch>
+</IfModule>
+
+### Удалить заголовок ETag (иначе есть проблемы с кешированием при включенном сжатии)
+<IfModule mod_headers.c>
+    Header unset ETag
+</IfModule>
+FileETag None
+
+<IfModule mod_expires.c>
+
+	ExpiresActive On
+	
+#	ExpiresDefault "access plus 11 month"
+#	Header append Cache-Control "public"
+
+	#30 days
+	ExpiresByType image/x-icon A2592000
+	ExpiresByType application/x-javascript A2592000
+	ExpiresByType application/javascript A2592000
+	ExpiresByType text/javascript A2592000
+	ExpiresByType text/ecmascript A2592000
+	ExpiresByType text/css A2592000
+	
+	#7 Days
+	ExpiresByType image/gif A604800
+	ExpiresByType image/png A604800
+	ExpiresByType image/jpeg A604800
+	ExpiresByType text/plain A604800
+	ExpiresByType application/x-shockwave-flash A604800
+	ExpiresByType video/x-flv A604800
+	ExpiresByType application/pdf A604800
+	
+	#ExpiresByType text/html A900
+</IfModule>
+
+# use mod_rewrite for pretty URL support
+RewriteEngine on
+
+RewriteCond %{REQUEST_FILENAME} !-d
+# otherwise forward the request to index.php
+
+RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+# if a directory or a file exists, use the request directly
+RewriteCond %{REQUEST_FILENAME} !-f
+
+RewriteRule . index.php

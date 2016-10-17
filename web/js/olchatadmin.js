@@ -1,14 +1,13 @@
 (function($) {
-    $.widget('custom.olchat', {
+    $.widget('custom.olchatadmin', {
         userId: 0,
         storage: {
             userId: 'dmChatUserId',
             history: 'dmChatHistoriess'
         },
-        moderatorUid: null,
         childs: null,
         options: {
-            server: "http://yiichat.local:8008",
+            server: "http://vsesvit.local:8008",
             classes: {
                 head: "dm-onchat-head",
                 field: "dm-onchat-input",
@@ -20,6 +19,7 @@
             }
         },
         _create: function() {
+        	console.log("init");
             this.socket = io.connect(this.options.server);
             this._setProperties();
         },
@@ -29,7 +29,7 @@
             this.socket.on('show chat', function() {
                 self._showDialog();
             });
-            this.socket.on('to user', function(msg) {
+            this.socket.on('to moderator', function(msg) {
                 self._appendNewMessage(msg);
             });
             this._getUid();
@@ -51,11 +51,10 @@
             if (e.which == 13) {
                 var msg = this.childs.field.val();
                 this.childs.head.hide();
-                console.log({msg: msg, uid: this.userId});
-                this.socket.emit('to moderator', {msg: msg, uid: this.userId});
+                this.socket.emit('to moderator', msg);
                 this._appendUserMsg(msg);
                 this._toHistory({
-                    sender: 'user',
+                    sender: 'moderator',
                     message: msg
                 });
                 this.childs.field.val('');
@@ -93,24 +92,20 @@
                 });
             }
         },
-        _appendNewMessage: function(data) {
-            console.log('Incoming msg: ' + data.msg);
-            if (this.moderatorUid === undefined) {
-                this.moderatorUid = data.aid;
-            }
-            this._appendAdminMsg(data.msg);
+        _appendNewMessage: function(msg) {
+            this._appendAdminMsg(msg);
             this._toHistory({
-                sender: 'moderator',
+                sender: 'user',
                 message: msg
             });
         },
-        _appendUserMsg: function(msg) {
+        _appendAdminMsg: function(msg) {
             this.childs.dialog.append($("<div />").addClass("message-row").append($("<div />").addClass("message user-message").text(msg)));
             this.childs.dialog.animate({
                 scrollTop: this.childs.dialog.prop("scrollHeight") - this.childs.dialog.height()
             }, 20);
         },
-        _appendAdminMsg: function(msg) {
+        _appendUserMsg: function(msg) {
             this.childs.dialog.append($("<div />").addClass("message-row").append($("<div />").addClass("dm-onchat-photo")).append($("<div />").addClass("message admin-message").text(msg)));
             this.childs.dialog.animate({
                 scrollTop: this.childs.dialog.prop("scrollHeight") - this.childs.dialog.height()

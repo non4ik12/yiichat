@@ -47,7 +47,7 @@
             </div>
             <div id="users-online" class="tab-pane fade">
                 <h3>Users online</h3>
-                <div class="data"></div>
+                <div class="users-online-data"></div>
             </div>
             <div id="menu2" class="tab-pane fade">
                 <h3>Menu 2</h3>

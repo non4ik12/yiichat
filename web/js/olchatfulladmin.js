@@ -15,7 +15,8 @@
                 body: "dm-onchat-body",
                 contacts: "dm-onchat-contacts",
                 tabs: "dm-onchat-tabs",
-                users_online: "users-online .data"
+                users_online: "users-online",
+                users_online_data: "users-online-data"
             }
         },
         _create: function() {
@@ -36,27 +37,33 @@
                 self._appendNewMessage(data);
             });
 
-            this.socket.on('usersOnline', function(data) {
-                console.log(data);
-                var self = this;
-                $.each(data, function(a,b){
-                    console.log(a);
-                    console.log(b);
-                    self.childs.users_online
-                        .append(
-                            $("<div />").addClass("row")
-                                // .append($("<div />").addClass("col-md-5").text(b.uid))
-                        )
-                });
-                
-            });
             this._getUid();
             $.each(this.options.classes, function(a, b) {
-                childs[a] = $(self.element).find('.' + b);
+                childs[a] = $('.' + b);
             });
             this.childs = childs;
             this._on(this.childs.field, {
                 keypress: "_sendMessage"
+            });
+
+            this.socket.on('usersOnline', function(data) {
+                self._loadUsersInfo(data);
+            });
+        },
+        _loadUsersInfo: function(data) {
+            var self = this;
+            this.childs.users_online_data.html('');
+            $.each(data, function(a,b){
+                self.childs.users_online_data
+                    .append(
+                        $("<div />").addClass("row")
+                            .append($("<div />").addClass("col-md-3").text(b.uid + "(" + b.ip + ")"))
+                            .append($("<div />").addClass("col-md-2").text(b.location))
+                            .append($("<div />").addClass("col-md-1").text(b.browser))
+                            .append($("<div />").addClass("col-md-6").html(
+                                $("<a />").attr({"href": b.page, target:"_blank"}).text(b.page))
+                            )
+                    )
             });
         },
         _sendMessage: function(e) {

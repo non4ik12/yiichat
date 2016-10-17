@@ -1,3 +1,27 @@
+function ajax(url, uId) {
+    var XMLHttpRequest = require('xhr2');
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var r = JSON.parse(this.response);
+            clientsInfo[uId]["location"] = r.country+"/"+r.city;
+        }
+    };
+    xhttp.open("GET", url, true);
+    xhttp.send();
+
+    // Вещаем админам
+    var admins_keys = Object.keys(admins), i;
+    for (i = admins_keys.length-1; i >= 0; i--) {
+        io.sockets.to(admins[admins_keys[i]]).emit("usersOnline", getUsersInfo());
+    }
+
+}
+
+function getGeoLocation(uId) {
+    ajax("http://ip-api.com/json/" + "95.47.151.4", uId);
+}
+
 var PORT = 8008;
 var options = {
     //    'log level': 0
@@ -53,6 +77,16 @@ io.on('connection', function(socket) {
         io.to(clients[uid]).emit('show chat', '1');
     }
 
+    function getUsersInfo() {
+        var result = [],
+            keys = Object.keys(clients);
+        for (var i = 0; i < 10; i++) {
+            if (keys[i] === undefined) break;
+            result.push(clientsInfo[keys[i]]);
+        }
+        return result;
+    }
+
     function getModerator() {
         var ak = Object.keys(admins);
         return ak[Math.floor(Math.random() * ak.length)];
@@ -85,15 +119,22 @@ io.on('connection', function(socket) {
             console.log('User (' + getIP(socket) + ') зашел на страницу: ' + user.page);
             showChat(user.uid);
         } else {
+            getGeoLocation(user.uid);
             clientsInfo[user.uid] = {
                 ip: getIP(socket),
                 browser: getBrowser(),
-            }
+                uid: user.uid
+            };
             console.log('User (' + getIP(socket) + ') новый.');
         }
-        console.log(clientsInfo);
-        console.log('--------------------');
         clients[user.uid] = socket.id;
+        clientsInfo[user.uid]['page'] = user.page;
+
+        // Вещаем админам
+        var admins_keys = Object.keys(admins), i;
+        for (i = admins_keys.length-1; i >= 0; i--) {
+            io.sockets.to(admins[admins_keys[i]]).emit("usersOnline", getUsersInfo());
+        }
     });
     socket.on("adminAuth", function(mod) {
         if (admins[mod.uid] !== undefined) {
@@ -101,15 +142,14 @@ io.on('connection', function(socket) {
         } else {
             console.log('Admin (' + getIP(socket) + ') зашел на сайт.');
         }
-        console.log(clientsInfo['be3557f5-f200-4658-9c60-c602aa82c32a']);
-        console.log(clientsInfo);
-        console.log('--------------------');
-        // socket.emit("usersOnline", clientsInfo['be3557f5-f200-4658-9c60-c602aa82c32a']);
+        socket.emit("usersOnline", getUsersInfo());
         admins[mod.uid] = socket.id;
         console.log(admins);
     });
-
     // socket.on("getUsersOnline", function() {
     //     socket.emit(clientsInfo);
     // })
+    // 
 });
+
+

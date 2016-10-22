@@ -1,26 +1,3 @@
-function ajax(url, uId) {
-    var XMLHttpRequest = require('xhr2');
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            var r = JSON.parse(this.response);
-            clientsInfo[uId]["location"] = r.country + "/" + r.city;
-        }
-    };
-    xhttp.open("GET", url, true);
-    xhttp.send();
-    // Вещаем админам
-    var admins_keys = Object.keys(admins),
-        i;
-    for (i = admins_keys.length - 1; i >= 0; i--) {
-        io.sockets.to(admins[admins_keys[i]]).emit("usersOnline", getUsersInfo());
-    }
-}
-
-function getGeoLocation(uId, ip) {
-    ajax("http://ip-api.com/json/" + ip, uId);
-}
-
 var protocol = 'https';
 var express = require('express');
 var app = express();
@@ -90,6 +67,29 @@ io.on('connection', function(socket) {
 
     function showChat(uid) {
         io.to(clients[uid]).emit('show chat', '1');
+    }
+
+    function ajax(url, uId) {
+        var XMLHttpRequest = require('xhr2');
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var r = JSON.parse(this.response);
+                clientsInfo[uId]["location"] = r.country + "/" + r.city;
+            }
+        };
+        xhttp.open("GET", url, true);
+        xhttp.send();
+        // Вещаем админам
+        var admins_keys = Object.keys(admins),
+            i;
+        for (i = admins_keys.length - 1; i >= 0; i--) {
+            io.sockets.to(admins[admins_keys[i]]).emit("usersOnline", getUsersInfo());
+        }
+    }
+
+    function getGeoLocation(uId, ip) {
+        ajax("http://ip-api.com/json/" + ip, uId);
     }
 
     function getUsersInfo() {

@@ -4,37 +4,52 @@ function ajax(url, uId) {
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             var r = JSON.parse(this.response);
-            clientsInfo[uId]["location"] = r.country+"/"+r.city;
+            clientsInfo[uId]["location"] = r.country + "/" + r.city;
         }
     };
     xhttp.open("GET", url, true);
     xhttp.send();
-
     // Вещаем админам
-    var admins_keys = Object.keys(admins), i;
-    for (i = admins_keys.length-1; i >= 0; i--) {
+    var admins_keys = Object.keys(admins),
+        i;
+    for (i = admins_keys.length - 1; i >= 0; i--) {
         io.sockets.to(admins[admins_keys[i]]).emit("usersOnline", getUsersInfo());
     }
-
 }
 
-function getGeoLocation(uId) {
-    ajax("http://ip-api.com/json/" + "95.47.151.4", uId);
+function getGeoLocation(uId, ip) {
+    ajax("http://ip-api.com/json/" + ip, uId);
 }
 
-var PORT = 8008;
-var options = {
-    //    'log level': 0
-};
+var protocol = 'https';
+var express = require('express');
+var app = express();
+
+if (protocol == 'http') {
+    var port = 8008;
+    var connect = require('http');
+    // Create an HTTP service.
+    var server = connect.createServer(app).listen(port);
+} else {
+    var port = 80;
+    var connect = require('https');
+    var fs = require('fs');
+    // This line is from the Node.js HTTPS documentation.
+    var options = {
+        key: fs.readFileSync('privkey.pem'),
+        cert: fs.readFileSync('fullchain.pem')
+    };
+    // Create an HTTPS service identical to the HTTP service.
+    var server = connect.createServer(options, app).listen(port);
+}
+
 var clients = [],
     admins = [],
     clientsInfo = [];
-var express = require('express');
-var app = express();
-var http = require('http');
-var server = http.createServer(app);
-var io = require('socket.io').listen(server, options);
-server.listen(PORT);
+
+var io = require('socket.io').listen(server);
+server.listen(port);
+
 app.use('/static', express.static(__dirname + '/static'));
 app.get('/', function(req, res) {
     res.sendfile(__dirname + '/index.html');
@@ -119,9 +134,10 @@ io.on('connection', function(socket) {
             console.log('User (' + getIP(socket) + ') зашел на страницу: ' + user.page);
             showChat(user.uid);
         } else {
-            getGeoLocation(user.uid);
+            var ip = getIP(socket);
+            getGeoLocation(user.uid, ip);
             clientsInfo[user.uid] = {
-                ip: getIP(socket),
+                ip: ip,
                 browser: getBrowser(),
                 uid: user.uid
             };
@@ -129,10 +145,10 @@ io.on('connection', function(socket) {
         }
         clients[user.uid] = socket.id;
         clientsInfo[user.uid]['page'] = user.page;
-
         // Вещаем админам
-        var admins_keys = Object.keys(admins), i;
-        for (i = admins_keys.length-1; i >= 0; i--) {
+        var admins_keys = Object.keys(admins),
+            i;
+        for (i = admins_keys.length - 1; i >= 0; i--) {
             io.sockets.to(admins[admins_keys[i]]).emit("usersOnline", getUsersInfo());
         }
     });
@@ -146,10 +162,4 @@ io.on('connection', function(socket) {
         admins[mod.uid] = socket.id;
         console.log(admins);
     });
-    // socket.on("getUsersOnline", function() {
-    //     socket.emit(clientsInfo);
-    // })
-    // 
 });
-
-

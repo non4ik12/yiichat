@@ -8,7 +8,7 @@
         _currentDialog: null,
         childs: null,
         options: {
-            server: "http://yiichat.local:8008",
+            server: "https://shyshko.in.ua:80",
             classes: {
                 field: "dm-onchat-input",
                 content: "dm-onchat-content",

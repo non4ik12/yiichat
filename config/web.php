@@ -51,7 +51,7 @@ $config = [
     'modules'    => [
         'user'   => [
             'class'  => 'dektrium\user\Module',
-            'admins' => ['nonko'],
+            'admins' => ['nonko', 'admin', 'only_you'],
         ],
         'admin'  => [
             'class' => 'app\modules\admin\Module',
@@ -68,13 +68,13 @@ if (YII_ENV_DEV) {
     $config['bootstrap'][]      = 'debug';
     $config['modules']['debug'] = [
         'class'      => 'yii\debug\Module',
-        'allowedIPs' => ['127.0.0.1'],
+        'allowedIPs' => ['127.0.0.1', '188.166.71.119', '77.87.144.11', '188.239.36.231', '185.128.232.242', '88.81.226.126'],
     ];
 
     $config['bootstrap'][]    = 'gii';
     $config['modules']['gii'] = [
         'class'      => 'yii\gii\Module',
-        'allowedIPs' => ['127.0.0.1'],
+        'allowedIPs' => ['127.0.0.1', '188.166.71.119', '188.239.36.231', '185.128.232.242', '88.81.226.126'],
     ];
 }
 

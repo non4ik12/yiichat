@@ -8,7 +8,7 @@
         moderatorUid: null,
         childs: null,
         options: {
-            server: "http://yiichat.local:8008",
+            server: "https://shyshko.in.ua:80",
             classes: {
                 head: "dm-onchat-head",
                 field: "dm-onchat-input",
